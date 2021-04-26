@@ -1,6 +1,6 @@
-import dotenv from 'dotenv'
+import dotEnv from 'dotenv'
 
-dotenv.config()
+dotEnv.config()
 
 export default {
     method: ['GET'],
@@ -12,7 +12,7 @@ export default {
             return h.view('home', {
                 credentials,
                 isAdmin: (credentials.scope === 'admin') ? true : false,
-                ssocket: process.env.SOCKET_HOST || 'localhost'
+                socket: process.env.SOCKET_HOST || 'localhost'
             })
         }
     }
