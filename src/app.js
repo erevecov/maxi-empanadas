@@ -65,7 +65,7 @@ internals.server = async () => {
                         host: process.env.REDIS_HOST || '127.0.0.1',
                         family: 4,
                         password: process.env.REDIS_PASSWORD,
-                        db: 11
+                        db: 15
                     },
                     decorate: true
                 }
