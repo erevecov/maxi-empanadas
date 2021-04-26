@@ -1,3 +1,4 @@
+import '@babel/polyfill'
 import Hapi from '@hapi/hapi'
 import catboxRedis from '@hapi/catbox-redis'
 import Boom from '@hapi/boom'
