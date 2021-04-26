@@ -1,0 +1,158 @@
+{{!< layout/default}}
+
+{{#extend "css"}}
+<style>
+.productSelect {
+    text-align-last: center;
+    text-align: center;
+    -ms-text-align-last: center;
+    -moz-text-align-last: center;
+}
+
+.varietySelect {
+    text-align-last: center;
+    text-align: center;
+    -ms-text-align-last: center;
+    -moz-text-align-last: center;
+}
+
+.fieldTitle {
+    margin-bottom: 20px;
+}
+
+.logoContainer {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.logo {
+    max-width: 300px;
+}
+
+.socketConnectionStatusBadge {
+    background: #F06638;
+    color: white !important;
+}
+
+.isConnected {
+    animation: isConnected 1s infinite;
+}
+
+
+@keyframes isConnected {
+    from {background-color: #f5b356;}
+    to {background-color: #F06638;}
+}
+
+.newRow {
+    background: transparent;
+    animation-name: newRow;
+    animation-duration: 3s;
+    animation-iteration-count: 1;
+}
+
+@keyframes newRow {
+    from {background-color: #F06638;}
+    to {background-color: transparent;}
+}
+
+#productQtyCounter {
+    width:100%;
+    text-align: center;
+    font-size: 30px;
+    font-weight: bold;
+}
+
+/* .navbar {
+    -webkit-box-shadow: 0 4px 6px -6px #222;
+    -moz-box-shadow: 0 4px 6px -6px #222;
+    box-shadow: 0 4px 6px -6px #222;
+} */
+
+/* #productsRegisterTableContainer {
+    max-height: 600px;
+    overflow-y: auto;
+} */
+
+</style>
+{{/extend}}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="logoContainer">
+                <img class="logo" src="/public/img/logo1.png" alt="">
+                <div id="socketConnectionStatus">
+                    <!-- <div class="socketConnectionStatusBadge isConnected">Conectado al servidor</div> -->
+                    <span class="badge rounded-pill socketConnectionStatusBadge isConnected">Conectado al servidor</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 text-center mb-3">
+                            <h3 class="fieldTitle">PRODUCTO</h3>
+
+                            <select id="productSelect" class="form-select form-select-lg mb-3 productSelect" aria-label=".form-select-lg example">
+                                <option value="0">-SELECCIONE UN PRODUCTO-</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <h3 class="fieldTitle">VARIEDAD</h3>
+
+                            <select id="varietySelect" class="form-select form-select-lg mb-3 varietySelect" aria-label=".form-select-lg example">
+                                <option value="0">-SELECCIONE UNA VARIEDAD-</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <h3 class="fieldTitle">CANTIDAD</h3>
+                            <div class="d-md-flex justify-content-md-center">
+                                <div class="d-grid gap-2">
+                                    <button id="btnProductQtyDiscount" type="button" class="btn btn-secondary btn-lg"><i class="fas fa-minus"></i></button>
+                                </div>
+
+                                <input id="productQtyCounter" class="form-control form-control-lg" type="text" placeholder="">
+
+                                <div class="d-grid gap-2">
+                                    <button id="btnProductQtyAdd" type="button" class="btn btn-secondary btn-lg"><i class="fas fa-plus"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <div class="d-grid gap-2">
+                                <button id="btnSaveProductRegister" style="height: 120px" class="btn btn-dark" type="button"><h2>GUARDAR</h2></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <h1 class="text-center">Registros de actividad</h1>
+        <div id="productsRegisterTableContainer" class="col-md-12 table-responsive">
+            <table id="productsRegisterTable" class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">FECHA Y HORA</th>
+                        <th scope="col">USUARIO</th>
+                        <th scope="col">PRODUCTO</th>
+                        <th scope="col">VARIEDAD</th>
+                        <th scope="col">CANTIDAD</th>
+                        <th scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody id="productsRegisterTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+
+{{#extend "js"}}
+<script src="/public/modules/home/home.js"></script>
+{{/extend}}

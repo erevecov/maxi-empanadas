@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maxi Empanadas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6" crossorigin="anonymous">
+    <style>
+        :root {
+            --blue: #275988;
+            --dark:#222222;
+            --grey: #DDDDDD;
+            --white: #FFFFFF;
+            --dark1: #292929;
+        }
+        html {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-color:var(--white);
+            font-family: 'Roboto', sans-serif;
+        }
+
+        #loginCardContainer {
+            height: 100% !important;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #loginCard {
+            width: 23rem;
+            height: 100% !important;
+            background-color:  var(--white) !important;
+            border-radius: 10px;
+            -webkit-box-shadow: 7px 3px 18px 14px rgba(0,0,0,0.26);
+            -moz-box-shadow: 7px 3px 18px 14px rgba(0,0,0,0.26);
+            box-shadow: 7px 3px 18px 14px rgba(0,0,0,0.26);
+        }
+
+        #loginCardFooter {
+            background-color: var(--white);
+            font-size: 20px;
+            padding: 0;
+            margin: 0;
+            border-top: 1px var(--grey) solid;
+            height: 70px;
+        }
+
+        #loginCardFooter button {
+
+            color: black;
+            height: 70px;
+            font-size: 20px;
+            padding: 0;
+        }
+
+        #loginCardFooter button:hover {
+            cursor: pointer;
+            font-size: 21px;
+        }
+
+        a {
+            color: black;
+        }
+
+        a:hover{
+            text-decoration: none;
+            color: black;
+        }
+        @media (max-width: 600px) {
+            #loginCard {
+                height: 100% !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0px;
+            }
+
+            #loginCardFooter {
+                font-size: 20px;
+                bottom: 0;
+            }
+
+            #loginCardContainer {
+                height: 100% !important;
+                display: block;
+            }
+
+            #loginCardContainer form {
+                height: 100% !important;
+            }
+        }
+
+        .logo {
+            width: 60%;
+            margin-bottom: 40px;
+            border-radius: 15%;
+        }
+
+        input {
+            background-color: #E8F0FF !important;
+            color: var(--dark) !important;
+            border: 50px !important;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="loginCardContainer">
+        <form method="post" action="/login">
+            <div id="loginCard" class="card bg-primary mb-3 center">
+
+                <div style="text-align: center;" class="card-body">
+
+                    <img class="logo" src="/public/img/logo1.png" alt="">
+
+                    <div class="form-group">
+                        <div class="form-group">
+                        <label for="username"><i class="fas fa-user"></i> Nombre de usuario</label>
+                        <div class="input-group mb-3">
+                            <input name="user" type="text" id="username" type="text" class="form-control" aria-label="user" placeholder="Su nombre de usuario">
+                        </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="passtext"><i class="fas fa-key"></i> Contraseña</label>
+                            <div class="input-group mb-3">
+                                <input name="password" type="password" class="form-control" aria-label="password" placeholder="*********">
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                {{#if message}}
+                    <div class="alert alert-dark text-center" role="alert">
+                        *{{message}}
+                    </div>
+                {{/if}}
+
+                <div id="loginCardFooter">
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn" style="text-decoration: none;">Iniciar sesión</button>
+                    </div>
+                </div>
+
+            </div>
+
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js" integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf" crossorigin="anonymous"></script>
+
+</body>
+</html>

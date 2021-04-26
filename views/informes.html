@@ -1,0 +1,554 @@
+{{!< layout/default}}
+
+{{#extend "css"}}
+<link rel="stylesheet" href="/public/DataTables/datatables.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+<style>
+
+</style>
+{{/extend}}
+<div class="row">
+    <div class="col-md-4 mb-3">
+        <label for="dateRange" class="form-label">Rango de fechas</label>
+        <input type="text" class="form-control" id="dateRange" placeholder="" />
+
+    </div>
+    <!-- <div class="col-md-2 mb-3">
+        <label for="initDate" class="form-label">Fecha de inicio</label>
+        <input type="text" class="form-control" id="initDate" placeholder="dia/mes/año" />
+
+    </div>
+    <div class="col-md-2 mb-3">
+        <label for="endDate" class="form-label">Fecha de fin</label>
+        <input type="text" class="form-control" id="endDate" placeholder="dia/mes/año" />
+    </div> -->
+
+    <div class="col-md-2 mb-3">
+        <label for="userSelect" class="form-label">Usuario</label>
+
+        <select id="userSelect" class="form-select userSelect">
+            <option value="0">-TODOS-</option>
+        </select>
+    </div>
+
+    <div class="col-md-2 mb-3">
+        <label for="productSelect" class="form-label">Producto</label>
+
+        <select id="productSelect" class="form-select productSelect">
+            <option value="0">-TODOS-</option>
+        </select>
+    </div>
+
+    <div class="col-md-2 mb-3">
+        <label for="varietySelect" class="form-label">Variedad</label>
+
+        <select id="varietySelect" class="form-select varietySelect">
+            <option value="0">-TODOS-</option>
+        </select>
+    </div>
+
+    <div class="col-md-2 mb-3">
+        <div class="d-grid gap-2">
+            <button id="filterBtn" style="height:70px;" type="button" class="btn btn-dark btn-lg"><i class="fas fa-filter"></i> Filtrar</button>
+        </div>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table id="registersTable" class="table table-striped table-bordered" style="width:100%">
+        <thead>
+            <tr>
+                <th scope="col">FECHA Y HORA</th>
+                <th scope="col">USUARIO</th>
+                <th scope="col">PRODUCTO</th>
+                <th scope="col">VARIEDAD</th>
+                <th scope="col">CANTIDAD</th>
+                <th scope="col"></th>
+            </tr>
+        </thead>
+    </table>
+</div>
+
+<div id="modal" class="modal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal-title"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modal-body"></div>
+            <div class="modal-footer" id="modal-footer"></div>
+        </div>
+    </div>
+</div>
+
+{{#extend "js"}}
+<script src="/public/js/jquery.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+<script src="/public/DataTables/datatables.min.js"></script>
+<script>
+const internals = {
+    tables: {
+        registersTable:{}
+    },
+    selectors: {
+        initDate: document.querySelector('#initDate'),
+        endDate: document.querySelector('#endDate'),
+        userSelect: document.querySelector('#userSelect'),
+        productSelect: document.querySelector('#productSelect'),
+        varietySelect: document.querySelector('#varietySelect')
+    },
+    initDate: moment().format('YYYY-MM-DD'),
+    endDate: moment().format('YYYY-MM-DD'),
+    modal: new bootstrap.Modal(document.querySelector('#modal'), {
+        keyboard: false
+    }),
+    data: {
+        users: [],
+        products: []
+    }
+}
+
+document.addEventListener('DOMContentLoaded', async function(event) {
+    await initFilters()
+
+    initCotsTable()
+})
+
+async function initFilters() {
+    // internals.selectors.initDate.value = moment(internals.initDate).format('DD/MM/YYYY')
+    // internals.selectors.endDate.value = moment(internals.endDate).format('DD/MM/YYYY')
+
+    $('#dateRange').daterangepicker({
+        opens: 'left',
+        locale: dateRangePickerDefaultLocale
+    }, function(start, end, label) {
+        internals.initDate = start.format('YYYY-MM-DD')
+        internals.endDate = end.format('YYYY-MM-DD')
+    })
+
+    await getUsers()
+    await getProducts()
+
+    document.querySelector('#filterBtn').addEventListener('click', async () => {
+        filterData()
+    })
+}
+
+async function filterData () {
+    try {
+        let queryData = {
+            initDate: internals.initDate,
+            endDate: internals.endDate,
+        }
+
+        if (internals.selectors.userSelect.value !== '0') {
+            queryData.user = internals.selectors.userSelect.value
+        }
+
+        if (internals.selectors.productSelect.value !== '0') {
+            queryData.product = internals.selectors.productSelect.value
+        }
+
+        if (internals.selectors.varietySelect.value !== '0') {
+            queryData.variety = internals.selectors.varietySelect.value
+        }
+
+        let resFilter = await axios.post('/api/findProductRegisters', queryData)
+
+        if (resFilter.data[0]) {
+            let parsedData = parseData(resFilter.data)
+
+            internals.tables.registersTable.datatable.clear().draw()
+            internals.tables.registersTable.datatable.rows.add(parsedData).draw()
+        } else {
+
+            internals.tables.registersTable.datatable.clear().draw()
+            notyf.open({
+                type: 'warning',
+                message: '* Ningún registro encontrado'
+            })
+        }
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+async function getUsers() {
+    try {
+        let users = await axios.get('/api/users')
+
+        internals.data.users = users.data
+
+        if (users.data[0]) {
+            internals.selectors.userSelect.innerHTML = users.data.reduce((acc,el) => {
+                acc += `
+                    <option value="${el._id}">${el.name.toUpperCase()}</option>
+                `
+
+                return acc
+            }, '<option value="0">-TODOS-</option>')
+        } else {
+            internals.selectors.userSelect.innerHTML = '<option value="0">-TODOS-</option>'
+        }
+
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+async function getProducts() {
+    try {
+        let products = await axios.get('/api/products')
+
+        internals.data.products = products.data
+
+        if (products.data[0]) {
+            internals.selectors.productSelect.innerHTML = products.data.reduce((acc,el) => {
+                acc += `
+                    <option value="${el._id}">${el.name.toUpperCase()}</option>
+                `
+
+                return acc
+            }, '<option value="0">-TODOS-</option>')
+        } else {
+            internals.selectors.productSelect.innerHTML = '<option value="0">-TODOS-</option>'
+        }
+
+        getVarieties(internals.selectors.productSelect.value)
+
+        internals.selectors.productSelect.addEventListener('change', (el) => {
+            getVarieties(el.target.value)
+        })
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+async function getVarieties(productId) {
+    try {
+        if (productId !== '0') {
+
+            let varieties = await axios.get(`/api/varieties/${productId}`)
+
+            if (varieties.data[0]) {
+                internals.selectors.varietySelect.innerHTML = varieties.data.reduce((acc,el) => {
+                    acc += `
+                        <option value="${el._id}">${el.name.toUpperCase()}</option>
+                    `
+
+                    return acc
+                }, '<option value="0">-TODOS-</option>')
+            } else {
+                internals.selectors.varietySelect.innerHTML = '<option value="0">-TODOS-</option>'
+            }
+        } else {
+            internals.selectors.varietySelect.innerHTML = '<option value="0">-TODOS-</option>'
+        }
+
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+async function initCotsTable() {
+    await $.when(internals.tables.registersTable.datatable = $('#registersTable').DataTable({
+        dom: 'Bfrtip',
+        buttons: [
+            {
+                extend: 'excel',
+                messageTop: `Informe de registros.`,
+                title: `Informe de registros ${moment().format('DD-MM-YYYY')}`,
+                exportOptions: {
+                    columns: [ 0, 1, 2, 3, 4 ]
+                }
+            }
+        ],
+        language: {
+            url: spanishDataTableLang
+        },
+        rowCallback: function( row, data, i ) {
+            let advicesLength = data.advices.length
+            // console.log(data)
+            $(row).find('td:eq(4)').html(`<b>${data.qty}</b>`)
+
+            $(row).find('td:eq(5)').html(`<button onclick="openRegister('${data._id}')" type="button" class="btn btn-dark"><i class="fas fa-eye"></i> <span class="badge rounded-pill ${(advicesLength > 0) ? 'bg-info' : 'bg-dark'}">${advicesLength}</span></button>`)
+        },
+        order: [[0, 'desc']],
+        ordering: true,
+        columnDefs: [{ type: 'date-euro', targets: [0] }],
+        searchHighlight: true,
+        responsive: false,
+        columns: [
+            { data: 'date' },
+            { data: 'user' },
+            { data: 'product' },
+            { data: 'variety' },
+            { data: 'qty' },
+            { data: null },
+        ]
+    }))
+
+    loadDataToRegistersTable()
+}
+
+async function loadDataToRegistersTable () {
+    try {
+        let date = moment().format('YYYY-MM-DD')
+
+        let productRegisters = await axios.post('/api/findProductRegisters', {
+            initDate: date,
+            endDate: date
+        })
+
+        if (productRegisters.data[0]) {
+            let parsedData = parseData(productRegisters.data)
+
+            internals.tables.registersTable.datatable.clear().draw()
+            internals.tables.registersTable.datatable.rows.add(parsedData).draw()
+        } else {
+
+            internals.tables.registersTable.datatable.clear().draw()
+            notyf.open({
+                type: 'warning',
+                message: '* Ningún registro en contrado'
+            })
+        }
+
+        // loadingHandler('stop')
+    } catch (error) {
+        console.log(error)
+
+        internals.tables.registersTable.datatable.clear().draw()
+        // loadingHandler('stop')
+    }
+
+}
+
+function parseData(data) {
+    return data.reduce((acc,el,i) => {
+        acc.push({
+            _id: el._id,
+            date: moment(el.date).format('DD/MM/YYYY HH:mm:ss'),
+            user: el.user.name.toUpperCase(),
+            product: el.product.name.toUpperCase(),
+            variety: el.variety.name.toUpperCase(),
+            advices: el.advices,
+            qty: el.qty
+        })
+
+        return acc
+    }, [])
+}
+
+async function openRegister(registerId) {
+    try {
+        let productRes = await axios.get(`/api/productRegister/${registerId}`)
+        // console.log(productRes)
+        internals.modal.show()
+
+        let modalSelectors = {
+            title: document.querySelector('#modal-title'),
+            body: document.querySelector('#modal-body'),
+            footer: document.querySelector('#modal-footer'),
+        }
+
+        modalSelectors.title.innerHTML = 'Registro'
+        modalSelectors.body.innerHTML = `
+            <div class="container-fluid">
+                <div class="col-md-12 mb-3 text-center">
+                    <h2>${moment(productRes.data.date).format('DD/MM/YYYY HH:mm:ss')}</h2>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="userSelectEdit" class="form-label">Usuario</label>
+
+                        <select id="userSelectEdit" class="form-select userSelect">
+                            <option value="0">-TODOS-</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="productSelectEdit" class="form-label">Producto</label>
+
+                        <select id="productSelectEdit" class="form-select productSelect">
+                            <option value="0">-TODOS-</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="varietySelectEdit" class="form-label">Variedad</label>
+
+                        <select id="varietySelectEdit" class="form-select varietySelect">
+                            <option value="0">-TODOS-</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="qtyEdit" class="form-label">Cantidad</label>
+
+                        <input id="qtyEdit" class="form-control form-control-lg" type="text" placeholder="Cantidad" aria-label="cantidad" value="${productRes.data.qty}">
+                    </div>
+                </div>
+
+                ${
+                    (productRes.data.advices.length > 0) ? '<h3 class="text-center">Mensajes</h3>' : '<br/>'
+                }
+                <div class="accordion col-md-12" id="advicesAccordion">
+                    ${
+                        productRes.data.advices.reduce((acc,el,i)=> {
+                            acc += `
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="adviceHeading-${i}">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#adviceBody-${i}" aria-expanded="true" aria-controls="#adviceBody-${i}">
+                                    Mensaje ${i+1}
+                                </button>
+                                </h2>
+                                <div id="adviceBody-${i}" class="accordion-collapse collapse" aria-labelledby="adviceHeading-${i}" data-bs-parent="#advicesAccordion">
+                                    <div class="accordion-body">
+                                        ${el.message}
+                                    </div>
+                                </div>
+                            </div>
+                            `
+
+                            return acc
+                        }, '')
+                    }
+                </div>
+
+                <div class="d-grid gap-2" style="margin-top: 30px;">
+                    <button id="deleteRegister" class="btn btn-danger" type="button">Eliminar registro</button>
+                </div>
+            </div>
+        `
+
+        let editSelectors = {
+            userSelectEdit: document.querySelector('#userSelectEdit'),
+            productSelectEdit: document.querySelector('#productSelectEdit'),
+            varietySelectEdit: document.querySelector('#varietySelectEdit'),
+            qtyEdit: document.querySelector('#qtyEdit'),
+        }
+
+        new Cleave(editSelectors.qtyEdit, {
+            numeral: true,
+            numeralPositiveOnly: true,
+            delimiter: '',
+            blocks: [6]
+        })
+
+        editSelectors.userSelectEdit.innerHTML = internals.data.users.reduce((acc,el,i) => {
+            acc += `
+                <option value="${el._id}">${el.name.toUpperCase()}</option>
+            `
+
+            return acc
+        }, '')
+
+        editSelectors.userSelectEdit.value = productRes.data.user
+
+        editSelectors.productSelectEdit.innerHTML = internals.data.products.reduce((acc,el,i) => {
+            acc += `
+                <option value="${el._id}">${el.name.toUpperCase()}</option>
+            `
+
+            return acc
+        }, '')
+
+        editSelectors.productSelectEdit.value = productRes.data.product
+
+        getVarietiesEdit(productRes.data.product, productRes.data.variety)
+
+        editSelectors.productSelectEdit.addEventListener('change', (el)=> {
+            getVarietiesEdit(el.target.value)
+        })
+
+        modalSelectors.footer.innerHTML = `
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            <button id="saveRegister" type="button" class="btn btn-dark">Guardar</button>
+        `
+
+        document.querySelector('#saveRegister').addEventListener('click', async () => {
+            if (editSelectors.qtyEdit.value >= 1 && editSelectors.qtyEdit.value <= 99999) {
+                let saveRegisterConfirm = await Swal.fire({
+                    title: 'Estas seguro de guardar el registro?',
+                    showCancelButton: true,
+                    confirmButtonText: 'Si, guardar',
+                    cancelButtonText: 'No, cancelar',
+                })
+
+                if (saveRegisterConfirm.isConfirmed) {
+                    let saveRegisterRes = await axios.post('/api/updateRegister', {
+                        id: registerId,
+                        user: editSelectors.userSelectEdit.value,
+                        product: editSelectors.productSelectEdit.value,
+                        variety: editSelectors.varietySelectEdit.value,
+                        qty: editSelectors.qtyEdit.value
+                    })
+
+                    if (saveRegisterRes.data) {
+                        filterData()
+                        internals.modal.hide()
+                        notyf.success('Registro guardado correctamente')
+                    } else {
+                        notyf.error('Ha ocurrido un error. Por favor recargue la página e intentelo nuevamente.')
+                    }
+                }
+            } else {
+                notyf.open({
+                    type: 'warning',
+                    message: '* La cantidad no puede ser menor a 1 ni mayor a 99999'
+                })
+            }
+        })
+
+        document.querySelector('#deleteRegister').addEventListener('click', async () => {
+            let deleteRegisterConfirm = await Swal.fire({
+                title: 'Estas seguro de eliminar el registro?',
+                showCancelButton: true,
+                confirmButtonText: 'Si, eliminar',
+                cancelButtonText: 'No, cancelar',
+            })
+
+            if (deleteRegisterConfirm.isConfirmed) {
+                let deleteRegisterRes = await axios.delete(`/api/deleteRegister/${registerId}`)
+
+                if (deleteRegisterRes.data) {
+                    filterData()
+                    internals.modal.hide()
+                    notyf.success('Registro eliminado correctamente')
+                } else {
+                    notyf.error('Ha ocurrido un error. Por favor recargue la página e intentelo nuevamente.')
+                }
+            }
+        })
+
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+async function getVarietiesEdit(productId, varietyId) {
+    try {
+        let varieties = await axios.get(`/api/varieties/${productId}`)
+
+        let varietySelectorEdit = document.querySelector('#varietySelectEdit')
+
+        varietySelectorEdit.innerHTML = varieties.data.reduce((acc,el) => {
+            acc += `
+                <option value="${el._id}">${el.name.toUpperCase()}</option>
+            `
+
+            return acc
+        }, '')
+
+        if (varietyId) {
+            varietySelectorEdit.value = varietyId
+        }
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+</script>
+{{/extend}}
